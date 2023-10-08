@@ -2,13 +2,11 @@ package eu.pb4.placeholders.impl;
 
 import eu.pb4.placeholders.api.node.*;
 import eu.pb4.placeholders.api.node.parent.*;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.Version;
-import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.*;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.fml.loading.FMLLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,21 +18,8 @@ import java.util.function.Function;
 @ApiStatus.Internal
 public class GeneralUtils {
     public static final Logger LOGGER = LoggerFactory.getLogger("Text Placeholder API");
-    public static final boolean IS_DEV = FabricLoader.getInstance().isDevelopmentEnvironment();
+    public static final boolean IS_DEV = !FMLLoader.isProduction();
     public static final TextNode[] CASTER = new TextNode[0];
-
-    public static final boolean IS_LEGACY_TRANSLATION;
-
-    static {
-        boolean IS_LEGACY1;
-        try {
-            IS_LEGACY1 = FabricLoader.getInstance().getModContainer("minecraft").get().getMetadata().getVersion().compareTo(Version.parse("1.19.4")) < 0;
-        } catch (VersionParsingException e) {
-            IS_LEGACY1 = false;
-            e.printStackTrace();
-        }
-        IS_LEGACY_TRANSLATION = IS_LEGACY1;
-    }
 
     public static String durationToString(long x) {
         long seconds = x % 60;
@@ -285,11 +270,7 @@ public class GeneralUtils {
                 }
             }
 
-            if (IS_LEGACY_TRANSLATION) {
-                list.add(TranslatedNode.of(content.getKey(), args.toArray()));
-            } else {
-                list.add(TranslatedNode.ofFallback(content.getKey(), content.getFallback(), args.toArray()));
-            }
+            list.add(TranslatedNode.ofFallback(content.getKey(), content.getFallback(), args.toArray()));
         } else if (input.getContents() instanceof ScoreContents content) {
             list.add(new ScoreNode(content.getName(), content.getObjective()));
         } else if (input.getContents() instanceof KeybindContents content) {

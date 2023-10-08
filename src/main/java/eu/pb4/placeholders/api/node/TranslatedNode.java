@@ -1,7 +1,6 @@
 package eu.pb4.placeholders.api.node;
 
 import eu.pb4.placeholders.api.ParserContext;
-import eu.pb4.placeholders.impl.GeneralUtils;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,11 +30,7 @@ public record TranslatedNode(String key, @Nullable String fallback, Object[] arg
             args[i] = this.args[i] instanceof TextNode textNode ? textNode.toText(context, removeBackslashes) : this.args[i];
         }
 
-        if (GeneralUtils.IS_LEGACY_TRANSLATION) {
-            return Component.translatable(this.key, args);
-        } else {
-            return Component.translatableWithFallback(this.key(), this.fallback, args);
-        }
+        return Component.translatableWithFallback(this.key(), this.fallback, args);
     }
 
     @Override
