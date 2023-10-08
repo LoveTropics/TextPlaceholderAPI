@@ -2,20 +2,23 @@ package eu.pb4.placeholders.impl.textparser;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import eu.pb4.placeholders.api.node.DirectTextNode;
-import eu.pb4.placeholders.api.node.parent.ParentTextNode;
-import eu.pb4.placeholders.api.parsers.TextParserV1;
-import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.api.node.LiteralNode;
+import eu.pb4.placeholders.api.node.TextNode;
+import eu.pb4.placeholders.api.parsers.TextParserV1;
+import eu.pb4.placeholders.impl.GeneralUtils.Pair;
 import io.netty.util.internal.UnstableApi;
-import net.minecraft.text.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.contents.KeybindContents;
+import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static eu.pb4.placeholders.impl.GeneralUtils.Pair;
 
 @ApiStatus.Internal
 public class TextParserImpl {
@@ -193,19 +196,19 @@ public class TextParserImpl {
     // Cursed don't touch this
     @ApiStatus.Experimental
     @UnstableApi
-    public static String convertToString(Text text) {
+    public static String convertToString(Component text) {
         StringBuilder builder = new StringBuilder();
         String style = GSON.toJson(text.getStyle());
         if (style != null && !style.equals("null")) {
             builder.append("<style:").append(style).append(">");
         }
-        if (text.getContent() instanceof LiteralTextContent literalText) {
-            builder.append(escapeCharacters(literalText.string()));
-        } else if (text.getContent() instanceof TranslatableTextContent translatableText) {
+        if (text.getContents() instanceof LiteralContents literalText) {
+            builder.append(escapeCharacters(literalText.text()));
+        } else if (text.getContents() instanceof TranslatableContents translatableText) {
             List<String> stringList = new ArrayList<>();
 
             for (Object arg : translatableText.getArgs()) {
-                if (arg instanceof Text text1) {
+                if (arg instanceof Component text1) {
                     stringList.add("'" + escapeCharacters(convertToString(text1)) + "'");
                 } else {
                     stringList.add("'" + escapeCharacters(arg.toString()) + "'");
@@ -219,13 +222,13 @@ public class TextParserImpl {
             String additional = String.join(":", stringList);
 
             builder.append("<lang:'").append(translatableText.getKey()).append("'").append(additional).append(">");
-        } else if (text.getContent() instanceof KeybindTextContent keybindText) {
-            builder.append("<key:'").append(keybindText.getKey()).append("'>");
+        } else if (text.getContents() instanceof KeybindContents keybindText) {
+            builder.append("<key:'").append(keybindText.getName()).append("'>");
         } else {
-            builder.append("<raw:'").append(escapeCharacters(Text.Serializer.toJson(text.copy()))).append("'>");
+            builder.append("<raw:'").append(escapeCharacters(Component.Serializer.toJson(text.copy()))).append("'>");
         }
 
-        for (Text text1 : text.getSiblings()) {
+        for (Component text1 : text.getSiblings()) {
             builder.append(convertToString(text1));
         }
 

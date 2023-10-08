@@ -2,28 +2,28 @@ package eu.pb4.placeholders.api.node.parent;
 
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.node.TextNode;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 import java.util.Arrays;
 
 
 public final class FormattingNode extends ParentNode {
-    private final Formatting[] formatting;
+    private final ChatFormatting[] formatting;
 
-    public FormattingNode(TextNode[] children, Formatting formatting) {
-        this(children, new Formatting[]{ formatting });
+    public FormattingNode(TextNode[] children, ChatFormatting formatting) {
+        this(children, new ChatFormatting[]{ formatting });
     }
 
-    public FormattingNode(TextNode[] children, Formatting... formatting) {
+    public FormattingNode(TextNode[] children, ChatFormatting... formatting) {
         super(children);
         this.formatting = formatting;
     }
 
     @Override
-    protected Text applyFormatting(MutableText out, ParserContext context) {
-        return out.formatted(this.formatting);
+    protected Component applyFormatting(MutableComponent out, ParserContext context) {
+        return out.withStyle(this.formatting);
     }
 
     @Override

@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import static eu.pb4.placeholders.impl.textparser.TextParserImpl.recursiveParsing;
-
 /**
  * Regex-based text parsing implementation. Should be always used first.
  * Loosely based on MiniMessage, with some degree of compatibility with it.

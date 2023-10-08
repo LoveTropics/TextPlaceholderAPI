@@ -3,10 +3,10 @@ package eu.pb4.placeholders.api.node.parent;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.api.parsers.NodeParser;
-import net.minecraft.entity.EntityType;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.EntityType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -23,7 +23,7 @@ public final class HoverNode<T, H> extends ParentNode {
     }
 
     @Override
-    protected Text applyFormatting(MutableText out, ParserContext context) {
+    protected Component applyFormatting(MutableComponent out, ParserContext context) {
         if (this.action == Action.TEXT) {
             return out.setStyle(out.getStyle().withHoverEvent(new HoverEvent((HoverEvent.Action<Object>) this.action.vanillaType(), ((TextNode) this.value).toText(context, true))));
         } else if (this.action == Action.ENTITY) {
@@ -72,14 +72,14 @@ public final class HoverNode<T, H> extends ParentNode {
     }
 
     public record Action<T, H>(HoverEvent.Action<H> vanillaType) {
-        public static final Action<EntityNodeContent, HoverEvent.EntityContent> ENTITY = new Action<>(HoverEvent.Action.SHOW_ENTITY);
-        public static final Action<HoverEvent.ItemStackContent, HoverEvent.ItemStackContent> ITEM_STACK = new Action<>(HoverEvent.Action.SHOW_ITEM);
-        public static final Action<TextNode, Text> TEXT = new Action<>(HoverEvent.Action.SHOW_TEXT);
+        public static final Action<EntityNodeContent, HoverEvent.EntityTooltipInfo> ENTITY = new Action<>(HoverEvent.Action.SHOW_ENTITY);
+        public static final Action<HoverEvent.ItemStackInfo, HoverEvent.ItemStackInfo> ITEM_STACK = new Action<>(HoverEvent.Action.SHOW_ITEM);
+        public static final Action<TextNode, Component> TEXT = new Action<>(HoverEvent.Action.SHOW_TEXT);
     }
 
     public record EntityNodeContent(EntityType<?>entityType, UUID uuid, @Nullable TextNode name) {
-        public HoverEvent.EntityContent toVanilla(ParserContext context) {
-            return new HoverEvent.EntityContent(this.entityType, this.uuid, this.name != null ? this.name.toText(context, true) : null);
+        public HoverEvent.EntityTooltipInfo toVanilla(ParserContext context) {
+            return new HoverEvent.EntityTooltipInfo(this.entityType, this.uuid, this.name != null ? this.name.toText(context, true) : null);
         }
     }
 }

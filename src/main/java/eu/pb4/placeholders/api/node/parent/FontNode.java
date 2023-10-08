@@ -2,22 +2,22 @@ package eu.pb4.placeholders.api.node.parent;
 
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.node.TextNode;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Arrays;
 
 public final class FontNode extends ParentNode {
-    private final Identifier font;
+    private final ResourceLocation font;
 
-    public FontNode(TextNode[] children, Identifier font) {
+    public FontNode(TextNode[] children, ResourceLocation font) {
         super(children);
         this.font = font;
     }
 
     @Override
-    protected Text applyFormatting(MutableText out, ParserContext context) {
+    protected Component applyFormatting(MutableComponent out, ParserContext context) {
         return out.setStyle(out.getStyle().withFont(font));
     }
 

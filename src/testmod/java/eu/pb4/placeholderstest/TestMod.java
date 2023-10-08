@@ -13,28 +13,28 @@ import eu.pb4.placeholders.api.parsers.TextParserV1;
 import eu.pb4.placeholders.api.parsers.MarkdownLiteParserV1;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.command.argument.TextArgumentType;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.text.Texts;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.ComponentArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
 
-import static net.minecraft.server.command.CommandManager.literal;
-import static net.minecraft.server.command.CommandManager.argument;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
 
 
 public class TestMod implements ModInitializer {
 
-    private static int perf(CommandContext<ServerCommandSource> context) {
+    private static int perf(CommandContext<CommandSourceStack> context) {
         long placeholderTimeTotal = 0;
         long contextTimeTotal = 0;
         long tagTimeTotal = 0;
         long textTimeTotal = 0;
-        Text output = null;
+        Component output = null;
         var input = context.getArgument("text", String.class);
-        ServerPlayerEntity player = context.getSource().getPlayer();
+        ServerPlayer player = context.getSource().getPlayer();
 
         int iter = 1024 * 20;
 
@@ -63,15 +63,15 @@ public class TestMod implements ModInitializer {
                 contextTimeTotal += System.nanoTime() - time;
                 time = System.nanoTime();
 
-                Text text = placeholders.toText(ctx, true);
+                Component text = placeholders.toText(ctx, true);
                 textTimeTotal +=  System.nanoTime() - time;
                 output = text;
             }
             long total = tagTimeTotal + placeholderTimeTotal + textTimeTotal + contextTimeTotal;
 
-            player.sendMessage(Text.literal(Text.Serializer.toJson(output)), false);
-            player.sendMessage(Texts.parse(context.getSource(), output, context.getSource().getEntity(), 0), false);
-            player.sendMessage(Text.literal(
+            player.sendSystemMessage(Component.literal(Component.Serializer.toJson(output)), false);
+            player.sendSystemMessage(ComponentUtils.updateForEntity(context.getSource(), output, context.getSource().getEntity(), 0), false);
+            player.sendSystemMessage(Component.literal(
                     "<FULL> Tag: " + ((tagTimeTotal / 1000) / 1000d) + " ms | " +
                             "Context: " + ((contextTimeTotal / 1000) / 1000d) + " ms | " +
                             "Placeholder: " + ((placeholderTimeTotal / 1000) / 1000d) + " ms | " +
@@ -79,7 +79,7 @@ public class TestMod implements ModInitializer {
                             "All: " + ((total / 1000) / 1000d) + " ms"
             ), false);
 
-            player.sendMessage(Text.literal(
+            player.sendSystemMessage(Component.literal(
                     "<SINGLE> Tag: " + ((tagTimeTotal / iter / 1000) / 1000d) + " ms | " +
                             "Context: " + ((contextTimeTotal / iter / 1000) / 1000d) + " ms | " +
                             "Placeholder: " + ((placeholderTimeTotal / iter / 1000) / 1000d) + " ms | " +
@@ -92,31 +92,31 @@ public class TestMod implements ModInitializer {
         return 0;
     }
 
-    private static int test(CommandContext<ServerCommandSource> context) {
+    private static int test(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
-            player.sendMessage(Placeholders.parseText(context.getArgument("text", Text.class), PlaceholderContext.of(player)), false);
+            ServerPlayer player = context.getSource().getPlayer();
+            player.sendSystemMessage(Placeholders.parseText(context.getArgument("text", Component.class), PlaceholderContext.of(player)), false);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return 0;
     }
 
-    private static int test2(CommandContext<ServerCommandSource> context) {
+    private static int test2(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
-            Text text = TextParserUtils.formatText(context.getArgument("text", String.class));
-            player.sendMessage(Text.literal(Text.Serializer.toJson(text)), false);
-            player.sendMessage(text, false);
+            ServerPlayer player = context.getSource().getPlayer();
+            Component text = TextParserUtils.formatText(context.getArgument("text", String.class));
+            player.sendSystemMessage(Component.literal(Component.Serializer.toJson(text)), false);
+            player.sendSystemMessage(text, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return 0;
     }
 
-    private static int test3(CommandContext<ServerCommandSource> context) {
+    private static int test3(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
+            ServerPlayer player = context.getSource().getPlayer();
             var time = System.nanoTime();
             var tags = TextNode.asSingle(
                     LegacyFormattingParser.ALL.parseNodes(
@@ -136,12 +136,12 @@ public class TestMod implements ModInitializer {
             var placeholderTime = System.nanoTime() - time;
             time = System.nanoTime();
 
-            Text text = placeholders.toText(ParserContext.of(PlaceholderContext.KEY, PlaceholderContext.of(player)), true);
+            Component text = placeholders.toText(ParserContext.of(PlaceholderContext.KEY, PlaceholderContext.of(player)), true);
             var textTime = System.nanoTime() - time;
 
-            player.sendMessage(Text.literal(Text.Serializer.toJson(text)), false);
-            player.sendMessage(Texts.parse(context.getSource(), text, context.getSource().getEntity(), 0), false);
-            player.sendMessage(Text.literal(
+            player.sendSystemMessage(Component.literal(Component.Serializer.toJson(text)), false);
+            player.sendSystemMessage(ComponentUtils.updateForEntity(context.getSource(), text, context.getSource().getEntity(), 0), false);
+            player.sendSystemMessage(Component.literal(
                       "Tag: " + ((tagTime / 1000) / 1000d) + " ms | " +
                             "Placeholder: " + ((placeholderTime / 1000) / 1000d) + " ms | " +
                             "Text: " + ((textTime / 1000) / 1000d) + " ms | " +
@@ -153,80 +153,80 @@ public class TestMod implements ModInitializer {
         return 0;
     }
 
-    private static int test4Text(CommandContext<ServerCommandSource> context) {
+    private static int test4Text(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
-            Text text = Placeholders.parseText(
+            ServerPlayer player = context.getSource().getPlayer();
+            Component text = Placeholders.parseText(
                     Placeholders.parseText(TextParserUtils.formatText(context.getArgument("text", String.class)), PlaceholderContext.of(player)),
                     Placeholders.PREDEFINED_PLACEHOLDER_PATTERN,
                     Map.of("player", player.getName())
             );
-            player.sendMessage(Text.literal(Text.Serializer.toJson(text)), false);
-            player.sendMessage(text, false);
+            player.sendSystemMessage(Component.literal(Component.Serializer.toJson(text)), false);
+            player.sendSystemMessage(text, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return 0;
     }
 
-    private static int test4nodes(CommandContext<ServerCommandSource> context) {
+    private static int test4nodes(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
-            Text text = Placeholders.parseNodes(
+            ServerPlayer player = context.getSource().getPlayer();
+            Component text = Placeholders.parseNodes(
                     Placeholders.parseNodes(TextParserUtils.formatNodes(context.getArgument("text", String.class))),
                     Placeholders.PREDEFINED_PLACEHOLDER_PATTERN,
                     Map.of("player", player.getName())
             ).toText(ParserContext.of(PlaceholderContext.KEY, PlaceholderContext.of(player)), true);
-            player.sendMessage(Text.literal(Text.Serializer.toJson(text)), false);
-            player.sendMessage(text, false);
+            player.sendSystemMessage(Component.literal(Component.Serializer.toJson(text)), false);
+            player.sendSystemMessage(text, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return 0;
     }
 
-    private static int test5(CommandContext<ServerCommandSource> context) {
+    private static int test5(CommandContext<CommandSourceStack> context) {
         /*try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
+            ServerPlayer player = context.getSource().getPlayer();
             Text text = Placeholders.parseTextCustom(
                     TextParser.parse(context.getArgument("text", String.class)),
                     player,
-                    Map.of(new Identifier("player"), (ctx) -> PlaceholderResult.value(Text.literal("").append(player.getName()).setStyle(Style.EMPTY.withColor(TextColor.parse(ctx.getArgument()))))), Placeholders.ALT_PLACEHOLDER_PATTERN_CUSTOM);
+                    Map.of(new Identifier("player"), (ctx) -> PlaceholderResult.value(Component.literal()("").append(player.getName()).setStyle(Style.EMPTY.withColor(TextColor.parse(ctx.getArgument()))))), Placeholders.ALT_PLACEHOLDER_PATTERN_CUSTOM);
 
-            player.sendMessage(Text.literal(Text.Serializer.toJson(text)), false);
-            player.sendMessage(text, false);
+            player.sendSystemMessage();(Component.literal()(Text.Serializer.toJson(text)), false);
+            player.sendSystemMessage();(text, false);
         } catch (Exception e) {
             e.printStackTrace();
         }*/
         return 0;
     }
 
-    private static int test6x(CommandContext<ServerCommandSource> context) {
+    private static int test6x(CommandContext<CommandSourceStack> context) {
         /*try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
+            ServerPlayer player = context.getSource().getPlayer();
             Text text = Placeholders.parseTextCustom(
                     TextParser.parse(context.getArgument("text", String.class)),
                     player,
-                    Map.of(new Identifier("player"), (ctx) -> PlaceholderResult.value(Text.literal("").append(player.getName()).setStyle(Style.EMPTY.withColor(TextColor.parse(ctx.getArgument()))))), Placeholders.ALT_PLACEHOLDER_PATTERN_CUSTOM);
+                    Map.of(new Identifier("player"), (ctx) -> PlaceholderResult.value(Component.literal()("").append(player.getName()).setStyle(Style.EMPTY.withColor(TextColor.parse(ctx.getArgument()))))), Placeholders.ALT_PLACEHOLDER_PATTERN_CUSTOM);
 
-            player.sendMessage(Text.literal(Text.Serializer.toJson(text)), false);
+            player.sendSystemMessage();(Component.literal()(Text.Serializer.toJson(text)), false);
 
             // Never use it, pls
-            player.sendMessage(Text.literal(eu.pb4.placeholders.old.util.TextParserUtils.convertToString(text)), false);
+            player.sendSystemMessage();(Component.literal()(eu.pb4.placeholders.old.util.TextParserUtils.convertToString(text)), false);
 
-            player.sendMessage(text, false);
+            player.sendSystemMessage();(text, false);
         } catch (Exception e) {
             e.printStackTrace();
         }*/
         return 0;
     }
 
-    private static int test7(CommandContext<ServerCommandSource> context) {
+    private static int test7(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
+            ServerPlayer player = context.getSource().getPlayer();
 
-            var text = Placeholders.parseText(Text.translatable("death.attack.outOfWorld", player.getDisplayName()), PlaceholderContext.of(player));
-            player.sendMessage(text);
+            var text = Placeholders.parseText(Component.translatable("death.attack.outOfWorld", player.getDisplayName()), PlaceholderContext.of(player));
+            player.sendSystemMessage(text);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -236,7 +236,7 @@ public class TestMod implements ModInitializer {
     public void onInitialize() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, dedicated) -> {
             dispatcher.register(
-                    literal("test").then(argument("text", TextArgumentType.text()).executes(TestMod::test))
+                    literal("test").then(argument("text", ComponentArgument.textComponent()).executes(TestMod::test))
             );
 
             dispatcher.register(

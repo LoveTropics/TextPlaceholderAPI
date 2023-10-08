@@ -2,33 +2,33 @@ package eu.pb4.placeholders.api;
 
 import com.mojang.authlib.GameProfile;
 import eu.pb4.placeholders.impl.placeholder.ViewObjectImpl;
-import net.minecraft.entity.Entity;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.CommandOutput;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public record PlaceholderContext(MinecraftServer server,
-                                 Supplier<ServerCommandSource> lazySource,
-                                 @Nullable ServerWorld world,
-                                 @Nullable ServerPlayerEntity player,
+                                 Supplier<CommandSourceStack> lazySource,
+                                 @Nullable ServerLevel world,
+                                 @Nullable ServerPlayer player,
                                  @Nullable Entity entity,
                                  @Nullable GameProfile gameProfile,
                                  ViewObject view
 ) {
 
     public PlaceholderContext(MinecraftServer server,
-                              ServerCommandSource source,
-                              @Nullable ServerWorld world,
-                              @Nullable ServerPlayerEntity player,
+                              CommandSourceStack source,
+                              @Nullable ServerLevel world,
+                              @Nullable ServerPlayer player,
                               @Nullable Entity entity,
                               @Nullable GameProfile gameProfile,
                               ViewObject view
@@ -36,14 +36,14 @@ public record PlaceholderContext(MinecraftServer server,
         this(server, () -> source, world, player, entity, gameProfile, view);
     }
 
-    public ServerCommandSource source() {
+    public CommandSourceStack source() {
         return this.lazySource.get();
     }
 
     public PlaceholderContext(MinecraftServer server,
-                              ServerCommandSource source,
-                              @Nullable ServerWorld world,
-                              @Nullable ServerPlayerEntity player,
+                              CommandSourceStack source,
+                              @Nullable ServerLevel world,
+                              @Nullable ServerPlayer player,
                               @Nullable Entity entity,
                               @Nullable GameProfile gameProfile) {
         this(server, source, world, player, entity, gameProfile, ViewObject.DEFAULT);
@@ -86,7 +86,7 @@ public record PlaceholderContext(MinecraftServer server,
     }
 
     public static PlaceholderContext of(MinecraftServer server, ViewObject view) {
-        return new PlaceholderContext(server, server::getCommandSource, null, null, null, null, view);
+        return new PlaceholderContext(server, server::createCommandSourceStack, null, null, null, null, view);
     }
 
     public static PlaceholderContext of(GameProfile profile, MinecraftServer server) {
@@ -95,23 +95,23 @@ public record PlaceholderContext(MinecraftServer server,
 
     public static PlaceholderContext of(GameProfile profile, MinecraftServer server, ViewObject view) {
         var name = profile.getName() != null ? profile.getName() : profile.getId().toString();
-        return new PlaceholderContext(server, () -> new ServerCommandSource(CommandOutput.DUMMY, Vec3d.ZERO, Vec2f.ZERO, server.getOverworld(), server.getPermissionLevel(profile), name, Text.literal(name), server, null), null, null, null, profile, view);
+        return new PlaceholderContext(server, () -> new CommandSourceStack(CommandSource.NULL, Vec3.ZERO, Vec2.ZERO, server.overworld(), server.getProfilePermissions(profile), name, Component.literal(name), server, null), null, null, null, profile, view);
     }
 
-    public static PlaceholderContext of(ServerPlayerEntity player) {
+    public static PlaceholderContext of(ServerPlayer player) {
         return of(player, ViewObject.DEFAULT);
     }
 
-    public static PlaceholderContext of(ServerPlayerEntity player, ViewObject view) {
-        return new PlaceholderContext(player.getServer(), player::getCommandSource, player.getServerWorld(), player, player, player.getGameProfile(), view);
+    public static PlaceholderContext of(ServerPlayer player, ViewObject view) {
+        return new PlaceholderContext(player.getServer(), player::createCommandSourceStack, player.serverLevel(), player, player, player.getGameProfile(), view);
     }
 
-    public static PlaceholderContext of(ServerCommandSource source) {
+    public static PlaceholderContext of(CommandSourceStack source) {
         return of(source, ViewObject.DEFAULT);
     }
 
-    public static PlaceholderContext of(ServerCommandSource source, ViewObject view) {
-        return new PlaceholderContext(source.getServer(), source, source.getWorld(), source.getPlayer(), source.getEntity(), source.getPlayer() != null ? source.getPlayer().getGameProfile() : null, view);
+    public static PlaceholderContext of(CommandSourceStack source, ViewObject view) {
+        return new PlaceholderContext(source.getServer(), source, source.getLevel(), source.getPlayer(), source.getEntity(), source.getPlayer() != null ? source.getPlayer().getGameProfile() : null, view);
     }
 
     public static PlaceholderContext of(Entity entity) {
@@ -119,21 +119,21 @@ public record PlaceholderContext(MinecraftServer server,
     }
 
     public static PlaceholderContext of(Entity entity, ViewObject view) {
-        if (entity instanceof ServerPlayerEntity player) {
+        if (entity instanceof ServerPlayer player) {
             return of(player, view);
         } else {
-            return new PlaceholderContext(entity.getServer(), entity::getCommandSource, (ServerWorld) entity.getWorld(), null, entity, null, view);
+            return new PlaceholderContext(entity.getServer(), entity::createCommandSourceStack, (ServerLevel) entity.level(), null, entity, null, view);
         }
     }
 
 
     public interface ViewObject {
-        ViewObject DEFAULT = of(new Identifier("placeholder_api", "default"));
+        ViewObject DEFAULT = of(new ResourceLocation("placeholder_api", "default"));
 
-        static ViewObject of(Identifier identifier) {
+        static ViewObject of(ResourceLocation identifier) {
             return new ViewObjectImpl(identifier);
         }
 
-        Identifier identifier();
+        ResourceLocation identifier();
     }
 }

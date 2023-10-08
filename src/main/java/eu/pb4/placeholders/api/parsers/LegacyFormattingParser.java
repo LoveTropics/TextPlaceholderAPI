@@ -9,8 +9,8 @@ import eu.pb4.placeholders.api.node.parent.FormattingNode;
 import eu.pb4.placeholders.api.node.parent.ParentTextNode;
 import eu.pb4.placeholders.impl.textparser.TextParserImpl;
 import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.TextColor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,16 +20,16 @@ import java.util.List;
  * Parser that can read legacy (and legacy like) format and convert it into TextNodes
  */
 public class LegacyFormattingParser implements NodeParser {
-    public static NodeParser COLORS = new LegacyFormattingParser(true, Arrays.stream(Formatting.values()).filter(x -> !x.isColor()).toArray(x -> new Formatting[x]));
-    public static NodeParser BASE_COLORS = new LegacyFormattingParser(false, Arrays.stream(Formatting.values()).filter(x -> !x.isColor()).toArray(x -> new Formatting[x]));
-    public static NodeParser ALL = new LegacyFormattingParser(true, Formatting.values());
-    private final Char2ObjectOpenHashMap<Formatting> map = new Char2ObjectOpenHashMap<>();
+    public static NodeParser COLORS = new LegacyFormattingParser(true, Arrays.stream(ChatFormatting.values()).filter(x -> !x.isColor()).toArray(x -> new ChatFormatting[x]));
+    public static NodeParser BASE_COLORS = new LegacyFormattingParser(false, Arrays.stream(ChatFormatting.values()).filter(x -> !x.isColor()).toArray(x -> new ChatFormatting[x]));
+    public static NodeParser ALL = new LegacyFormattingParser(true, ChatFormatting.values());
+    private final Char2ObjectOpenHashMap<ChatFormatting> map = new Char2ObjectOpenHashMap<>();
     private final boolean allowRgb;
 
-    public LegacyFormattingParser(boolean allowRgb, Formatting... allowedFormatting) {
+    public LegacyFormattingParser(boolean allowRgb, ChatFormatting... allowedFormatting) {
         this.allowRgb = allowRgb;
         for (var formatting : allowedFormatting) {
-            this.map.put(formatting.getCode(), formatting);
+            this.map.put(formatting.getChar(), formatting);
         }
     }
 

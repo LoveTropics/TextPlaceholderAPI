@@ -1,9 +1,9 @@
 package eu.pb4.placeholders.api.node.parent;
 
-import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.api.ParserContext;
+import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.api.parsers.NodeParser;
-import net.minecraft.text.*;
+import net.minecraft.network.chat.*;
 import org.jetbrains.annotations.Nullable;
 
 public final class StyledNode extends ParentNode {
@@ -59,8 +59,8 @@ public final class StyledNode extends ParentNode {
     }
 
     @Override
-    protected Text applyFormatting(MutableText out, ParserContext context) {
-        return (out.getStyle() == Style.EMPTY ? out : Text.empty().append(out)).setStyle(this.style(context));
+    protected Component applyFormatting(MutableComponent out, ParserContext context) {
+        return (out.getStyle() == Style.EMPTY ? out : Component.empty().append(out)).setStyle(this.style(context));
     }
 
     @Override

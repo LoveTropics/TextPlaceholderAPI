@@ -3,10 +3,10 @@ package eu.pb4.placeholders.api.node.parent;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.impl.GeneralUtils;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.util.Mth;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +20,7 @@ public final class GradientNode extends ParentNode {
         this.gradientProvider = gradientBuilder;
     }
 
-    public static Text apply(Text text, GradientProvider gradientProvider) {
+    public static Component apply(Component text, GradientProvider gradientProvider) {
         return GeneralUtils.toGradient(text, gradientProvider);
     }
 
@@ -65,7 +65,7 @@ public final class GradientNode extends ParentNode {
     }
 
     @Override
-    protected Text applyFormatting(MutableText out, ParserContext context) {
+    protected Component applyFormatting(MutableComponent out, ParserContext context) {
         return GeneralUtils.toGradient(out, this.gradientProvider);
     }
 
@@ -89,7 +89,7 @@ public final class GradientNode extends ParentNode {
         static GradientProvider colors(List<TextColor> colors) {
             var hvs = new ArrayList<GeneralUtils.HSV>(colors.size());
             for (var color : colors) {
-                hvs.add(GeneralUtils.rgbToHsv(color.getRgb()));
+                hvs.add(GeneralUtils.rgbToHsv(color.getValue()));
             }
 
             if (hvs.size() == 0) {
@@ -122,11 +122,11 @@ public final class GradientNode extends ParentNode {
                     hue = futureHue;
                 }
 
-                float sat = MathHelper.clamp(colorB.s() * progress + colorA.s() * (1 - progress), 0, 1);
-                float value = MathHelper.clamp(colorB.v() * progress + colorA.v() * (1 - progress), 0, 1);
+                float sat = Mth.clamp(colorB.s() * progress + colorA.s() * (1 - progress), 0, 1);
+                float value = Mth.clamp(colorB.v() * progress + colorA.v() * (1 - progress), 0, 1);
 
                 return TextColor.fromRgb(GeneralUtils.hvsToRgb(
-                        MathHelper.clamp(hue, 0, 1),
+                        Mth.clamp(hue, 0, 1),
                         sat,
                         value));
             };
