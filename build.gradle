@@ -23,27 +23,8 @@ repositories {
 	maven { url = "https://jitpack.io" }
 }
 
-sourceSets {
-	testmod {
-		runtimeClasspath += main.runtimeClasspath
-		compileClasspath += main.compileClasspath
-	}
-}
-
 loom {
 	runs {
-		testmodClient {
-			client()
-			ideConfigGenerated project.rootProject == project
-			name = "Test Mod Client"
-			source = sourceSets.testmod
-		}
-		testmodServer {
-			server()
-			ideConfigGenerated project.rootProject == project
-			name = "Test Mod Server"
-			source = sourceSets.testmod
-		}
 	}
 }
 
@@ -56,10 +37,6 @@ dependencies {
 	//modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	compileOnly("net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}")
 	localRuntime("net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}")
-
-	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
-	// You may need to force-disable transitiveness on them.
-	testmodImplementation sourceSets.main.output
 }
 
 processResources {
@@ -199,4 +176,4 @@ if (System.getenv("MODRINTH")) {
 	jar {
 		finalizedBy project.tasks.curseforge
 	}
-}*/
+}
