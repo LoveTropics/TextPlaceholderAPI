@@ -1,0 +1,14 @@
+modLoader = "javafml"
+loaderVersion = "[2,)"
+issueTrackerURL="https://github.com/LoveTropics/placeholder-api/issues"
+license = "LGPLv3"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName="Placeholder API"
+displayURL="https://pb4.eu"
+authors="Patbox"
+description='''
+Simple api for mods allowing for user friendly formatting and universal placeholders!
+'''
