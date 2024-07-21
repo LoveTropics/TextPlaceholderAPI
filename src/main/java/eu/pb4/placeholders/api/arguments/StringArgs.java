@@ -1,12 +1,12 @@
 package eu.pb4.placeholders.api.arguments;
 
-import net.minecraft.util.function.CharPredicate;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import net.minecraft.CharPredicate;
 
 public final class StringArgs {
     private static final StringArgs EMPTY = new StringArgs("");

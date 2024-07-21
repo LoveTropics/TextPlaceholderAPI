@@ -3,11 +3,10 @@ package eu.pb4.placeholders.api.node.parent;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.api.parsers.NodeParser;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-
 import java.util.Arrays;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 
 public final class DynamicColorNode extends SimpleStylingNode implements DynamicShadowNode.SimpleColoredTransformer {
     private final TextNode color;
@@ -24,7 +23,7 @@ public final class DynamicColorNode extends SimpleStylingNode implements Dynamic
 
     @Override
     protected Style style(ParserContext context) {
-        var c = TextColor.parse(color.toText(context).getString());
+        var c = TextColor.parseColor(color.toText(context).getString());
         return c.result().map(Style.EMPTY::withColor).orElse(Style.EMPTY);
     }
 
@@ -47,17 +46,17 @@ public final class DynamicColorNode extends SimpleStylingNode implements Dynamic
     }
 
     @Override
-    public int getDefaultShadowColor(Text out, float scale, float alpha, ParserContext context) {
-        var color = TextColor.parse(this.color.toText(context).getString());
+    public int getDefaultShadowColor(Component out, float scale, float alpha, ParserContext context) {
+        var color = TextColor.parseColor(this.color.toText(context).getString());
 
         if (color.result().isPresent()) {
-            return DynamicShadowNode.modifiedColor(color.getOrThrow().getRgb(), scale, alpha);
+            return DynamicShadowNode.modifiedColor(color.getOrThrow().getValue(), scale, alpha);
         }
         return 0;
     }
 
     @Override
     public boolean hasShadowColor(ParserContext context) {
-        return TextColor.parse(this.color.toText(context).getString()).result().isPresent();
+        return TextColor.parseColor(this.color.toText(context).getString()).result().isPresent();
     }
 }
