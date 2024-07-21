@@ -13,7 +13,6 @@ import eu.pb4.placeholders.api.node.parent.GradientNode;
 import eu.pb4.placeholders.api.node.parent.ParentNode;
 import eu.pb4.placeholders.api.node.parent.ParentTextNode;
 import eu.pb4.placeholders.api.node.parent.StyledNode;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -28,6 +27,7 @@ import net.minecraft.network.chat.contents.ScoreContents;
 import net.minecraft.network.chat.contents.SelectorContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,7 @@ import java.util.function.Function;
 @ApiStatus.Internal
 public class GeneralUtils {
     public static final Logger LOGGER = LoggerFactory.getLogger("Text Placeholder API");
-    public static final boolean IS_DEV = FabricLoader.getInstance().isDevelopmentEnvironment();
+    public static final boolean IS_DEV = !FMLEnvironment.production;
     public static final TextNode[] CASTER = new TextNode[0];
 
     public static String durationToString(long x) {
