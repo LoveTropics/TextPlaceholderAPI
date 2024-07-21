@@ -3,7 +3,11 @@ package eu.pb4.placeholders.api.parsers;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.PlaceholderContext;
 import eu.pb4.placeholders.api.Placeholders;
-import eu.pb4.placeholders.api.node.*;
+import eu.pb4.placeholders.api.node.DirectTextNode;
+import eu.pb4.placeholders.api.node.DynamicTextNode;
+import eu.pb4.placeholders.api.node.LiteralNode;
+import eu.pb4.placeholders.api.node.TextNode;
+import eu.pb4.placeholders.api.node.TranslatedNode;
 import eu.pb4.placeholders.api.node.parent.ParentNode;
 import eu.pb4.placeholders.api.node.parent.ParentTextNode;
 import eu.pb4.placeholders.api.parsers.format.MultiCharacterFormat;
@@ -12,12 +16,15 @@ import eu.pb4.placeholders.impl.placeholder.PlaceholderNode;
 import eu.pb4.placeholders.impl.textparser.MultiTagLikeParser;
 import eu.pb4.placeholders.impl.textparser.SingleTagLikeParser;
 import eu.pb4.placeholders.impl.textparser.providers.LenientFormat;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -40,15 +47,15 @@ public abstract class TagLikeParser implements NodeParser, TagLikeWrapper {
         return new SingleTagLikeParser(format, Provider.placeholder(placeholders));
     }
 
-    public static TagLikeParser placeholderText(Format format, Function<String, @Nullable Text> placeholders) {
+    public static TagLikeParser placeholderText(Format format, Function<String, @Nullable Component> placeholders) {
         return new SingleTagLikeParser(format, Provider.placeholderText(placeholders));
     }
 
-    public static TagLikeParser placeholderText(Format format, ParserContext.Key<Function<String, @Nullable Text>> key) {
+    public static TagLikeParser placeholderText(Format format, ParserContext.Key<Function<String, @Nullable Component>> key) {
         return new SingleTagLikeParser(format, Provider.placeholder(key));
     }
 
-    public static TagLikeParser placeholderText(Format format, Set<String> validIds, ParserContext.Key<Function<String, @Nullable Text>> key) {
+    public static TagLikeParser placeholderText(Format format, Set<String> validIds, ParserContext.Key<Function<String, @Nullable Component>> key) {
         return new SingleTagLikeParser(format, Provider.placeholder(validIds, key));
     }
 
@@ -133,7 +140,7 @@ public abstract class TagLikeParser implements NodeParser, TagLikeWrapper {
             };
         }
 
-        static Provider placeholderText(Function<String, @Nullable Text> function) {
+        static Provider placeholderText(Function<String, @Nullable Component> function) {
             return placeholder(x -> {
                 var y = function.apply(x);
                 return y != null ? new DirectTextNode(y) : null;
@@ -157,7 +164,7 @@ public abstract class TagLikeParser implements NodeParser, TagLikeWrapper {
             };
         }
 
-        static Provider placeholder(Set<String> validTags, ParserContext.Key<Function<String, Text>> key) {
+        static Provider placeholder(Set<String> validTags, ParserContext.Key<Function<String, Component>> key) {
             return new Provider() {
                 @Override
                 public boolean isValidTag(String tag, Context context) {
@@ -170,7 +177,7 @@ public abstract class TagLikeParser implements NodeParser, TagLikeWrapper {
                 }
             };
         }
-        static Provider placeholder(ParserContext.Key<Function<String, Text>> key) {
+        static Provider placeholder(ParserContext.Key<Function<String, Component>> key) {
             return new Provider() {
                 @Override
                 public boolean isValidTag(String tag, Context context) {

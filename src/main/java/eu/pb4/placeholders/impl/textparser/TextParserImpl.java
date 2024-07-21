@@ -1,14 +1,9 @@
 package eu.pb4.placeholders.impl.textparser;
 
-import com.google.gson.JsonElement;
-import com.mojang.datafixers.util.Either;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.JsonOps;
 import eu.pb4.placeholders.api.node.LiteralNode;
 import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.api.parsers.TextParserV1;
-import io.netty.util.internal.UnstableApi;
-import net.minecraft.text.*;
+import eu.pb4.placeholders.impl.GeneralUtils.Pair;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
@@ -16,8 +11,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static eu.pb4.placeholders.impl.GeneralUtils.Pair;
 
 
 @Deprecated

@@ -3,8 +3,8 @@ package eu.pb4.placeholders.api.node.parent;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.api.parsers.NodeParser;
-import net.minecraft.text.Style;
-import net.minecraft.text.TextColor;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 
 import java.util.Arrays;
 
@@ -23,7 +23,7 @@ public final class DynamicColorNode extends SimpleStylingNode {
 
     @Override
     protected Style style(ParserContext context) {
-        var c = TextColor.parse(color.toText(context).getString());
+        var c = TextColor.parseColor(color.toText(context).getString());
         return c.result().map(Style.EMPTY::withColor).orElse(Style.EMPTY);
     }
 

@@ -1,45 +1,76 @@
 package eu.pb4.placeholders.impl.textparser;
 
-
 import com.mojang.datafixers.util.Either;
-import eu.pb4.placeholders.api.arguments.StringArgs;
 import eu.pb4.placeholders.api.arguments.SimpleArguments;
-import eu.pb4.placeholders.api.node.*;
-import eu.pb4.placeholders.api.node.parent.*;
-import eu.pb4.placeholders.api.parsers.tag.SimpleTags;
+import eu.pb4.placeholders.api.arguments.StringArgs;
+import eu.pb4.placeholders.api.node.KeybindNode;
+import eu.pb4.placeholders.api.node.NbtNode;
+import eu.pb4.placeholders.api.node.ScoreNode;
+import eu.pb4.placeholders.api.node.SelectorNode;
+import eu.pb4.placeholders.api.node.TextNode;
+import eu.pb4.placeholders.api.node.TranslatedNode;
+import eu.pb4.placeholders.api.node.parent.BoldNode;
+import eu.pb4.placeholders.api.node.parent.ClickActionNode;
+import eu.pb4.placeholders.api.node.parent.DynamicColorNode;
+import eu.pb4.placeholders.api.node.parent.FontNode;
+import eu.pb4.placeholders.api.node.parent.GradientNode;
+import eu.pb4.placeholders.api.node.parent.HoverNode;
+import eu.pb4.placeholders.api.node.parent.InsertNode;
+import eu.pb4.placeholders.api.node.parent.ItalicNode;
+import eu.pb4.placeholders.api.node.parent.ObfuscatedNode;
+import eu.pb4.placeholders.api.node.parent.ParentNode;
+import eu.pb4.placeholders.api.node.parent.StrikethroughNode;
+import eu.pb4.placeholders.api.node.parent.StyledNode;
+import eu.pb4.placeholders.api.node.parent.TransformNode;
+import eu.pb4.placeholders.api.node.parent.UnderlinedNode;
 import eu.pb4.placeholders.api.parsers.tag.NodeCreator;
+import eu.pb4.placeholders.api.parsers.tag.SimpleTags;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import eu.pb4.placeholders.api.parsers.tag.TextTag;
 import eu.pb4.placeholders.impl.GeneralUtils;
 import eu.pb4.placeholders.impl.StringArgOps;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.StringNbtReader;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.contents.BlockDataSource;
+import net.minecraft.network.chat.contents.EntityDataSource;
+import net.minecraft.network.chat.contents.StorageDataSource;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class BuiltinTags {
-    public static final TextColor DEFAULT_COLOR = TextColor.fromFormatting(Formatting.WHITE);
+    public static final TextColor DEFAULT_COLOR = TextColor.fromLegacyFormat(ChatFormatting.WHITE);
     public static void register() {
         {
-            Map<Formatting, List<String>> aliases = new HashMap<>();
-            aliases.put(Formatting.GOLD, List.of("orange"));
-            aliases.put(Formatting.GRAY, List.of("grey", "light_gray", "light_grey"));
-            aliases.put(Formatting.LIGHT_PURPLE, List.of("pink"));
-            aliases.put(Formatting.DARK_PURPLE, List.of("purple"));
-            aliases.put(Formatting.DARK_GRAY, List.of("dark_grey"));
+            Map<ChatFormatting, List<String>> aliases = new HashMap<>();
+            aliases.put(ChatFormatting.GOLD, List.of("orange"));
+            aliases.put(ChatFormatting.GRAY, List.of("grey", "light_gray", "light_grey"));
+            aliases.put(ChatFormatting.LIGHT_PURPLE, List.of("pink"));
+            aliases.put(ChatFormatting.DARK_PURPLE, List.of("purple"));
+            aliases.put(ChatFormatting.DARK_GRAY, List.of("dark_grey"));
 
-            for (Formatting formatting : Formatting.values()) {
-                if (formatting.isModifier()) {
+            for (ChatFormatting formatting : ChatFormatting.values()) {
+                if (formatting.isFormat()) {
                     continue;
                 }
 
@@ -123,7 +154,7 @@ public final class BuiltinTags {
                             "font",
                             "other_formatting",
                             false,
-                            (nodes, data, parser) -> new FontNode(nodes, Identifier.tryParse(data.get("value", 0, "")))
+                            (nodes, data, parser) -> new FontNode(nodes, ResourceLocation.tryParse(data.get("value", 0, "")))
                     )
             );
         }
@@ -198,7 +229,7 @@ public final class BuiltinTags {
                             var type = data.getNext("type");
                             var value = data.getNext("value", "");
                             for (ClickEvent.Action action : ClickEvent.Action.values()) {
-                                if (action.asString().equals(type)) {
+                                if (action.getSerializedName().equals(type)) {
                                     return new ClickActionNode(nodes, action, parser.parseNode(value));
                                 }
                             }
@@ -314,7 +345,7 @@ public final class BuiltinTags {
                                             return new HoverNode<>(nodes,
                                                     HoverNode.Action.ENTITY,
                                                     new HoverNode.EntityNodeContent(
-                                                            EntityType.get(data.getNext("entity", "")).orElse(EntityType.PIG),
+                                                            EntityType.byString(data.getNext("entity", "")).orElse(EntityType.PIG),
                                                             UUID.fromString(data.getNext("uuid", Util.NIL_UUID.toString())),
                                                             new ParentNode(parser.parseNode(data.get("name", 3, "")))
                                                     ));
@@ -323,10 +354,10 @@ public final class BuiltinTags {
                                             try {
                                                 return new HoverNode<>(nodes,
                                                         HoverNode.Action.ITEM_STACK,
-                                                        new HoverEvent.ItemStackContent(ItemStack.fromNbtOrEmpty(DynamicRegistryManager.EMPTY, StringNbtReader.parse(value)))
+                                                        new HoverEvent.ItemStackInfo(ItemStack.parseOptional(RegistryAccess.EMPTY, TagParser.parseTag(value)))
                                                 );
                                             } catch (Throwable e) {
-                                                var stack = Registries.ITEM.get(Identifier.tryParse(data.get("item", value))).getDefaultStack();
+                                                var stack = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(data.get("item", value))).getDefaultInstance();
 
                                                 var count = data.getNext("count");
                                                 if (count != null) {
@@ -335,7 +366,7 @@ public final class BuiltinTags {
 
                                                 return new HoverNode<>(nodes,
                                                         HoverNode.Action.ITEM_STACK,
-                                                        new HoverEvent.ItemStackContent(stack)
+                                                        new HoverEvent.ItemStackInfo(stack)
                                                 );
                                             }
                                         } else {
@@ -423,7 +454,7 @@ public final class BuiltinTags {
                                         break;
                                     }
 
-                                    TextColor.parse(part).result().ifPresent(textColors::add);
+                                    TextColor.parseColor(part).result().ifPresent(textColors::add);
                                 }
                                 return new GradientNode(nodes, switch (type) {
                                     case "oklab" -> GradientNode.GradientProvider.colorsOkLab(textColors);
@@ -454,7 +485,7 @@ public final class BuiltinTags {
                                         break;
                                     }
 
-                                    TextColor.parse(part).result().ifPresent(textColors::add);
+                                    TextColor.parseColor(part).result().ifPresent(textColors::add);
                                 }
                                 // We cannot have an empty list!
                                 if (textColors.isEmpty()) {
@@ -488,7 +519,7 @@ public final class BuiltinTags {
                             "special",
                             false,
                             (nodes, data, parser) -> {
-                                var x = Style.Codecs.CODEC.decode(StringArgOps.INSTANCE, Either.right(data));
+                                var x = Style.Serializer.CODEC.decode(StringArgOps.INSTANCE, Either.right(data));
                                 if (x.error().isPresent()) {
                                     System.out.println(x.error().get().message());
                                     return TextNode.asSingle(nodes);
@@ -538,9 +569,9 @@ public final class BuiltinTags {
                                 var cleanLine1 = data.getNext("path", "");
 
                                 var type = switch (source) {
-                                    case "block" -> new BlockNbtDataSource(cleanLine1);
-                                    case "entity" -> new EntityNbtDataSource(cleanLine1);
-                                    case "storage" -> new StorageNbtDataSource(Identifier.tryParse(cleanLine1));
+                                    case "block" -> new BlockDataSource(cleanLine1);
+                                    case "entity" -> new EntityDataSource(cleanLine1);
+                                    case "storage" -> new StorageDataSource(ResourceLocation.tryParse(cleanLine1));
                                     default -> null;
                                 };
 
@@ -561,7 +592,7 @@ public final class BuiltinTags {
         }
     }
 
-    private static Function<MutableText, Text> getTransform(StringArgs val) {
+    private static Function<MutableComponent, Component> getTransform(StringArgs val) {
         if (val.isEmpty()) {
             return GeneralUtils.MutableTransformer.CLEAR;
         }
@@ -577,7 +608,7 @@ public final class BuiltinTags {
                 case "font" -> x -> x.withFont(null);
                 case "bold" -> x -> x.withBold(null);
                 case "italic" -> x -> x.withItalic(null);
-                case "underline" -> x -> x.withUnderline(null);
+                case "underline" -> x -> x.withUnderlined(null);
                 case "strikethrough" -> x -> x.withStrikethrough(null);
                 case "all" -> x -> Style.EMPTY;
                 default -> x -> x;

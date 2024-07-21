@@ -3,8 +3,8 @@ package eu.pb4.placeholders.api.node.parent;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.api.parsers.NodeParser;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.Style;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Style;
 
 public final class ClickActionNode extends SimpleStylingNode {
     private final ClickEvent.Action action;

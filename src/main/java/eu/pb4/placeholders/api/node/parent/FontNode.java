@@ -2,15 +2,15 @@ package eu.pb4.placeholders.api.node.parent;
 
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.node.TextNode;
-import net.minecraft.text.Style;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Arrays;
 
 public final class FontNode extends SimpleStylingNode {
-    private final Identifier font;
+    private final ResourceLocation font;
 
-    public FontNode(TextNode[] children, Identifier font) {
+    public FontNode(TextNode[] children, ResourceLocation font) {
         super(children);
         this.font = font;
     }

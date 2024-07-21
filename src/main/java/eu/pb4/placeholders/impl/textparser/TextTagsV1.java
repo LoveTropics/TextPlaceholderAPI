@@ -2,21 +2,55 @@ package eu.pb4.placeholders.impl.textparser;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import eu.pb4.placeholders.api.node.*;
-import eu.pb4.placeholders.api.node.parent.*;
+import eu.pb4.placeholders.api.node.DirectTextNode;
+import eu.pb4.placeholders.api.node.KeybindNode;
+import eu.pb4.placeholders.api.node.LiteralNode;
+import eu.pb4.placeholders.api.node.NbtNode;
+import eu.pb4.placeholders.api.node.ScoreNode;
+import eu.pb4.placeholders.api.node.SelectorNode;
+import eu.pb4.placeholders.api.node.TextNode;
+import eu.pb4.placeholders.api.node.TranslatedNode;
+import eu.pb4.placeholders.api.node.parent.BoldNode;
+import eu.pb4.placeholders.api.node.parent.ClickActionNode;
+import eu.pb4.placeholders.api.node.parent.ColorNode;
+import eu.pb4.placeholders.api.node.parent.FontNode;
+import eu.pb4.placeholders.api.node.parent.FormattingNode;
+import eu.pb4.placeholders.api.node.parent.GradientNode;
+import eu.pb4.placeholders.api.node.parent.HoverNode;
+import eu.pb4.placeholders.api.node.parent.InsertNode;
+import eu.pb4.placeholders.api.node.parent.ItalicNode;
+import eu.pb4.placeholders.api.node.parent.ObfuscatedNode;
+import eu.pb4.placeholders.api.node.parent.ParentNode;
+import eu.pb4.placeholders.api.node.parent.StrikethroughNode;
+import eu.pb4.placeholders.api.node.parent.TransformNode;
+import eu.pb4.placeholders.api.node.parent.UnderlinedNode;
 import eu.pb4.placeholders.api.parsers.TextParserV1;
 import eu.pb4.placeholders.impl.GeneralUtils;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.StringNbtReader;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.contents.BlockDataSource;
+import net.minecraft.network.chat.contents.EntityDataSource;
+import net.minecraft.network.chat.contents.StorageDataSource;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static eu.pb4.placeholders.impl.textparser.TextParserImpl.*;
@@ -32,8 +66,8 @@ public final class TextTagsV1 {
             aliases.put("light_purple", List.of("pink"));
             aliases.put("dark_gray", List.of("dark_grey"));
 
-            for (Formatting formatting : Formatting.values()) {
-                if (formatting.isModifier()) {
+            for (ChatFormatting formatting : ChatFormatting.values()) {
+                if (formatting.isFormat()) {
                     continue;
                 }
 
@@ -108,7 +142,7 @@ public final class TextTagsV1 {
                             List.of("colour", "c"),
                             "color",
                             true,
-                            wrap((nodes, data) -> new ColorNode(nodes, TextColor.parse(cleanArgument(data)).result().orElse(null)))
+                            wrap((nodes, data) -> new ColorNode(nodes, TextColor.parseColor(cleanArgument(data)).result().orElse(null)))
                     )
             );
         }
@@ -118,7 +152,7 @@ public final class TextTagsV1 {
                             "font",
                             "other_formatting",
                             false,
-                            wrap((nodes, data) -> new FontNode(nodes, Identifier.tryParse(cleanArgument(data))))
+                            wrap((nodes, data) -> new FontNode(nodes, ResourceLocation.tryParse(cleanArgument(data))))
                     )
             );
         }
@@ -194,7 +228,7 @@ public final class TextTagsV1 {
                 var out = recursiveParsing(input, handlers, endAt);
                 if (lines.length > 1) {
                     for (ClickEvent.Action action : ClickEvent.Action.values()) {
-                        if (action.asString().equals(cleanArgument(lines[0]))) {
+                        if (action.getSerializedName().equals(cleanArgument(lines[0]))) {
                             return out.value(new ClickActionNode(out.nodes(), action, new LiteralNode(restoreOriginalEscaping(cleanArgument(lines[1])))));
                         }
                     }
@@ -310,7 +344,7 @@ public final class TextTagsV1 {
                                                 return out.value(new HoverNode<>(out.nodes(),
                                                         HoverNode.Action.ENTITY,
                                                         new HoverNode.EntityNodeContent(
-                                                                EntityType.get(restoreOriginalEscaping(restoreOriginalEscaping(cleanArgument(lines[0])))).orElse(EntityType.PIG),
+                                                                EntityType.byString(restoreOriginalEscaping(restoreOriginalEscaping(cleanArgument(lines[0])))).orElse(EntityType.PIG),
                                                                 UUID.fromString(cleanArgument(lines[1])),
                                                                 new ParentNode(parse(restoreOriginalEscaping(restoreOriginalEscaping(cleanArgument(lines[2]))), handlers)))
                                                 ));
@@ -319,12 +353,12 @@ public final class TextTagsV1 {
                                             try {
                                                 return out.value(new HoverNode<>(out.nodes(),
                                                         HoverNode.Action.ITEM_STACK,
-                                                        new HoverEvent.ItemStackContent(ItemStack.fromNbtOrEmpty(DynamicRegistryManager.EMPTY, StringNbtReader.parse(restoreOriginalEscaping(cleanArgument(lines[1])))))
+                                                        new HoverEvent.ItemStackInfo(ItemStack.parseOptional(RegistryAccess.EMPTY, TagParser.parseTag(restoreOriginalEscaping(cleanArgument(lines[1])))))
                                                 ));
                                             } catch (Throwable e) {
                                                 lines = lines[1].split(":", 2);
                                                 if (lines.length > 0) {
-                                                    var stack = Registries.ITEM.get(Identifier.tryParse(lines[0])).getDefaultStack();
+                                                    var stack = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(lines[0])).getDefaultInstance();
 
                                                     if (lines.length > 1) {
                                                         stack.setCount(Integer.parseInt(lines[1]));
@@ -332,7 +366,7 @@ public final class TextTagsV1 {
 
                                                     return out.value(new HoverNode<>(out.nodes(),
                                                             HoverNode.Action.ITEM_STACK,
-                                                            new HoverEvent.ItemStackContent(stack)
+                                                            new HoverEvent.ItemStackInfo(stack)
                                                     ));
                                                 }
                                             }
@@ -446,7 +480,7 @@ public final class TextTagsV1 {
                                 var out = recursiveParsing(input, handlers, endAt);
                                 List<TextColor> textColors = new ArrayList<>();
                                 for (String string : val) {
-                                    TextColor.parse(string).result().ifPresent(textColors::add);
+                                    TextColor.parseColor(string).result().ifPresent(textColors::add);
                                 }
                                 return out.value(GradientNode.colors(textColors, out.nodes()));
                             }
@@ -469,7 +503,7 @@ public final class TextTagsV1 {
                                 var textColors = new ArrayList<TextColor>();
 
                                 for (String string : val) {
-                                    TextColor.parse(string).result().ifPresent(textColors::add);
+                                    TextColor.parseColor(string).result().ifPresent(textColors::add);
                                 }
                                 // We cannot have an empty list!
                                 if (textColors.isEmpty()) {
@@ -506,7 +540,7 @@ public final class TextTagsV1 {
                             "raw_style",
                             "special",
                             false,
-                            (tag, data, input, handlers, endAt) -> new TextParserV1.TagNodeValue(new DirectTextNode(Text.Serialization.fromLenientJson(restoreOriginalEscaping(cleanArgument(data)), DynamicRegistryManager.EMPTY)), 0)
+                            (tag, data, input, handlers, endAt) -> new TextParserV1.TagNodeValue(new DirectTextNode(Component.Serializer.fromJsonLenient(restoreOriginalEscaping(cleanArgument(data)), RegistryAccess.EMPTY)), 0)
                     )
             );
         }
@@ -560,9 +594,9 @@ public final class TextTagsV1 {
                                 var cleanLine1 = restoreOriginalEscaping(cleanArgument(lines[1]));
 
                                 var type = switch (lines[0]) {
-                                    case "block" -> new BlockNbtDataSource(cleanLine1);
-                                    case "entity" -> new EntityNbtDataSource(cleanLine1);
-                                    case "storage" -> new StorageNbtDataSource(Identifier.tryParse(cleanLine1));
+                                    case "block" -> new BlockDataSource(cleanLine1);
+                                    case "entity" -> new EntityDataSource(cleanLine1);
+                                    case "storage" -> new StorageDataSource(ResourceLocation.tryParse(cleanLine1));
                                     default -> null;
                                 };
 
@@ -580,7 +614,7 @@ public final class TextTagsV1 {
         }
     }
 
-    private static Function<MutableText, Text> getTransform(String[] val) {
+    private static Function<MutableComponent, Component> getTransform(String[] val) {
         if (val.length == 0) {
             return GeneralUtils.MutableTransformer.CLEAR;
         }
@@ -596,7 +630,7 @@ public final class TextTagsV1 {
                 case "font" -> x -> x.withFont(null);
                 case "bold" -> x -> x.withBold(null);
                 case "italic" -> x -> x.withItalic(null);
-                case "underline" -> x -> x.withUnderline(null);
+                case "underline" -> x -> x.withUnderlined(null);
                 case "strikethrough" -> x -> x.withStrikethrough(null);
                 case "all" -> x -> Style.EMPTY;
                 default -> x -> x;

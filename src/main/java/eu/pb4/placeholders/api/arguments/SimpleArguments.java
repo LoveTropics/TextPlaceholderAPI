@@ -1,6 +1,6 @@
 package eu.pb4.placeholders.api.arguments;
 
-import net.minecraft.util.function.CharPredicate;
+import net.minecraft.CharPredicate;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

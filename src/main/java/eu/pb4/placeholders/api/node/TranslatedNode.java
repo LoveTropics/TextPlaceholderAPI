@@ -2,9 +2,7 @@ package eu.pb4.placeholders.api.node;
 
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
-import eu.pb4.placeholders.api.parsers.TagLikeParser;
-import eu.pb4.placeholders.impl.GeneralUtils;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -27,14 +25,14 @@ public record TranslatedNode(String key, @Nullable String fallback, Object[] arg
     }
 
     @Override
-    public Text toText(ParserContext context, boolean removeBackslashes) {
+    public Component toText(ParserContext context, boolean removeBackslashes) {
         var args = new Object[this.args.length];
         for (int i = 0; i < this.args.length; i++) {
             args[i] = this.args[i] instanceof TextNode textNode ? textNode.toText(context, removeBackslashes) : this.args[i];
         }
 
 
-        return Text.translatableWithFallback(this.key(), this.fallback, args);
+        return Component.translatableWithFallback(this.key(), this.fallback, args);
     }
 
     @Override

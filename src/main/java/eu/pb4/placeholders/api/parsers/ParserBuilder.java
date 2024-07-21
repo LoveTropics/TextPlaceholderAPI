@@ -1,14 +1,21 @@
 package eu.pb4.placeholders.api.parsers;
 
-import eu.pb4.placeholders.api.*;
+import eu.pb4.placeholders.api.ParserContext;
+import eu.pb4.placeholders.api.PlaceholderContext;
+import eu.pb4.placeholders.api.Placeholders;
 import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import eu.pb4.placeholders.impl.textparser.MultiTagLikeParser;
 import eu.pb4.placeholders.impl.textparser.SingleTagLikeParser;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -18,7 +25,7 @@ import java.util.function.Function;
 public class ParserBuilder {
     private final Map<TagLikeParser.Format, TagLikeParser.Provider> tagLike = new HashMap<>();
     private final List<NodeParser> parserList = new ArrayList<>();
-    private final List<Formatting> legacyFormatting = new ArrayList<>();
+    private final List<ChatFormatting> legacyFormatting = new ArrayList<>();
     private boolean hasLegacy = false;
     private boolean legacyRGB = false;
     private boolean simplifiedTextFormat;
@@ -65,14 +72,14 @@ public class ParserBuilder {
     /**
      * Enables parsing of custom, context dependent placeholders
      */
-    public ParserBuilder placeholders(TagLikeParser.Format format, ParserContext.Key<Function<String, Text>> key) {
+    public ParserBuilder placeholders(TagLikeParser.Format format, ParserContext.Key<Function<String, Component>> key) {
         return customTags(format, TagLikeParser.Provider.placeholder(key));
     }
 
     /**
      * Enables parsing of custom, context dependent placeholders
      */
-    public ParserBuilder placeholders(TagLikeParser.Format format, Set<String> tags, ParserContext.Key<Function<String, Text>> key) {
+    public ParserBuilder placeholders(TagLikeParser.Format format, Set<String> tags, ParserContext.Key<Function<String, Component>> key) {
         return customTags(format, TagLikeParser.Provider.placeholder(tags, key));
     }
 
@@ -164,7 +171,7 @@ public class ParserBuilder {
     /**
      * Enables legacy formatting.
      */
-    public ParserBuilder legacy(boolean allowRGB, Formatting... formatting) {
+    public ParserBuilder legacy(boolean allowRGB, ChatFormatting... formatting) {
         this.hasLegacy = true;
         this.legacyRGB = allowRGB;
         this.legacyFormatting.addAll(List.of(formatting));
@@ -175,7 +182,7 @@ public class ParserBuilder {
     /**
      * Enables legacy formatting.
      */
-    public ParserBuilder legacy(boolean allowRGB, Collection<Formatting> formatting) {
+    public ParserBuilder legacy(boolean allowRGB, Collection<ChatFormatting> formatting) {
         this.hasLegacy = true;
         this.legacyRGB = allowRGB;
         this.legacyFormatting.addAll(formatting);
@@ -192,7 +199,7 @@ public class ParserBuilder {
 
     /**
      * Enables pre-parsing for static elements.
-     * This should only be used if you don't convert to {@link Text} right away, but also don't transform
+     * This should only be used if you don't convert to {@link Component} right away, but also don't transform
      * it further yourself (aka you use TextNode's as a template with custom placeholders)
      */
     public ParserBuilder staticPreParsing() {
@@ -242,7 +249,7 @@ public class ParserBuilder {
         list.addAll(this.parserList);
 
         if (this.hasLegacy) {
-            list.add(new LegacyFormattingParser(this.legacyRGB, this.legacyFormatting.toArray(new Formatting[0])));
+            list.add(new LegacyFormattingParser(this.legacyRGB, this.legacyFormatting.toArray(new ChatFormatting[0])));
         }
 
         if (this.staticPreParsing) {
