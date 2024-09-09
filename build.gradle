@@ -7,7 +7,7 @@ plugins {
 }
 
 base {
-	archivesName = project.mod_id
+	archivesName = project.mod_id + "-lt"
 }
 version = project.mod_version
 group = project.maven_group
